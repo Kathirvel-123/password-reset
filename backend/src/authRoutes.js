@@ -2,18 +2,19 @@ const router = require("express").Router();
 const crypto = require("crypto");
 const bcrypt = require("bcryptjs");
 const User = require("../models/User");
-const nodemailer = require('nodemailer');  // ✅ CORRECT IMPORT
+const nodemailer = require('nodemailer');
 
-// ✅ FIXED: createTransport (NOT createTransporter)
+// ✅ PRODUCTION READY: Use ENV vars
+const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
 const transporter = nodemailer.createTransport({
   service: 'gmail',
   auth: {
-    user: 'dbsample64@gmail.com',           // ✅ YOUR GMAIL
-    pass: 'ivbinushxjnmzdgk'               // ✅ YOUR APP PASSWORD
+    user: process.env.GMAIL_USER,        // Render env var
+    pass: process.env.GMAIL_PASS         // Render env var
   }
 });
 
-// ✅ REGISTER (SAME)
+// ✅ REGISTER
 router.post("/register", async (req, res) => {
   try {
     const { name, email, password } = req.body;
@@ -35,7 +36,7 @@ router.post("/register", async (req, res) => {
   }
 });
 
-// ✅ LOGIN (SAME)
+// ✅ LOGIN
 router.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -53,7 +54,7 @@ router.post("/login", async (req, res) => {
   }
 });
 
-// ✅ FORGOT PASSWORD - REAL GMAIL
+// ✅ FORGOT PASSWORD - PRODUCTION READY
 router.post("/forgot", async (req, res) => {
   try {
     const { email } = req.body;
@@ -74,14 +75,14 @@ router.post("/forgot", async (req, res) => {
 
     const token = crypto.randomBytes(16).toString("base64url").slice(0, 32);
     user.resetToken = token;
-    user.resetExpires = Date.now() + 24 * 60 * 60 * 1000;
+    user.resetExpires = Date.now() + 24 * 60 * 60 * 1000; // 24 hours
     await user.save();
 
-    const link = `http://localhost:3000/reset-password?token=${token}`;
+    // ✅ DYNAMIC FRONTEND URL (Render/Netlify)
+    const link = `${frontendUrl}/reset-password?token=${token}`;
     
-    // ✅ SEND REAL EMAIL
     const mailOptions = {
-      from: '"Password Reset" <dbsample64@gmail.com>',
+      from: `"Password Reset" <${process.env.GMAIL_USER}>`,
       to: email,
       subject: '🔑 Password Reset - SecurePass',
       html: `
@@ -89,12 +90,12 @@ router.post("/forgot", async (req, res) => {
         <p>Click <a href="${link}" style="color: #4f46e5; text-decoration: none; padding: 10px 20px; background: #4f46e5; color: white; border-radius: 5px;">Reset Password</a></p>
         <p><strong>Direct link:</strong> ${link}</p>
         <hr>
-        <small>This link expires in 24 hours.</small>
+        <small>This link expires in 24 hours. If you didn't request this, ignore.</small>
       `
     };
     
     await transporter.sendMail(mailOptions);
-    console.log(`✅ REAL EMAIL SENT from dbsample64@gmail.com to ${email}`);
+    console.log(`✅ REAL EMAIL SENT to ${email} → Check YOUR Gmail!`);
     
     res.json({ message: "Reset link sent to your email!" });
     
@@ -104,7 +105,7 @@ router.post("/forgot", async (req, res) => {
   }
 });
 
-// ✅ RESET (SAME)
+// ✅ RESET PASSWORD
 router.post("/reset", async (req, res) => {
   try {
     const { token, password } = req.body;
@@ -124,7 +125,7 @@ router.post("/reset", async (req, res) => {
     await user.save();
 
     console.log(`✅ Password reset for: ${user.email}`);
-    res.json({ message: "Password changed! Redirecting to login..." });
+    res.json({ message: "Password changed! Please login with new password." });
   } catch (error) {
     console.error("Reset error:", error);
     res.status(500).json({ message: "Server error" });
