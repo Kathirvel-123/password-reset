@@ -3,7 +3,7 @@ import { useState } from "react";
 import axios from "axios";
 import AuthLayout from "../components/AuthLayout";
 
-const BACKEND_URL = "http://localhost:5000";  // ✅ LOCAL BACKEND
+const BACKEND_URL = "https://password-reset-fug4.onrender.com";  
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState("");

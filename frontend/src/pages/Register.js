@@ -3,7 +3,7 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import AuthLayout from "../components/AuthLayout";
 
-const BACKEND_URL = "http://localhost:5000";  // ✅ LOCAL
+const BACKEND_URL = "https://password-reset-fug4.onrender.com";  
 
 export default function Register() {
   const [formData, setFormData] = useState({ name: "", email: "", password: "" });

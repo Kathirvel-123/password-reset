@@ -3,7 +3,7 @@ import { useSearchParams, useNavigate } from "react-router-dom";
 import axios from "axios";
 import AuthLayout from "../components/AuthLayout";
 
-const BACKEND_URL = "http://localhost:5000";
+const BACKEND_URL = "https://password-reset-fug4.onrender.com";
 
 export default function ResetPassword() {
   const [searchParams] = useSearchParams();
