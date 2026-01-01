@@ -10,7 +10,7 @@ const app = express();
 
 // ✅ FIXED CORS
 app.use(cors({
-  origin: ["http://localhost:3000", "http://localhost:3001"],
+  origin: ["http://localhost:3000", "http://localhost:3001", "https://password-reset007.netlify.app/"],
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE"],
   allowedHeaders: ["Content-Type", "Authorization"]
@@ -26,7 +26,7 @@ app.get("/", (req, res) => {
 
 // ✅ MongoDB connection
 mongoose
-  .connect(process.env.MONGO_URL)
+  .connect(process.env.MONGO_URI)
   .then(() => console.log("✅ MongoDB connected"))
   .catch((err) => console.log("❌ MongoDB error:", err));
 
