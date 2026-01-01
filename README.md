@@ -3,7 +3,6 @@
  Production-Ready MERN Auth System
 Complete user authentication with secure password reset, modern glassmorphism UI, and full-stack deployment. Features register, login, forgot password, reset, and confetti dashboard with purple gradient theme matching "Send Reset Link" style.
 
-![React](https://img.shields.io/badge/React-18-blue![Node.js](https://img.shields.io/badge/Node.js-18-green![MongoDB](https://img.shields.io/badge/MongoDB-7.0-bright![Netlify](https://img.shields.io/badge/Netlify-Deploy![Render](https://img.shields.io/badge/Render-Backend
 ---
 ## ✨ Live Demo
 
