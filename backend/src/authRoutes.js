@@ -8,7 +8,7 @@ const nodemailer = require('nodemailer');
 const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
 
 // ✅ MAILJET SMTP (Render/Netlify compatible - Gmail often blocked)[web:20][web:21][web:24]
-const transporter = nodemailer.createTransporter({
+const transporter = nodemailer.createTransport({
   host: 'in-v3.mailjet.com',
   port: 587,
   secure: false, // true for 465, false for other ports
