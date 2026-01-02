@@ -6,15 +6,19 @@ const nodemailer = require('nodemailer');
 
 // ✅ PRODUCTION READY: Use ENV vars
 const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
-const transporter = nodemailer.createTransport({
-  service: 'gmail',
+
+// ✅ MAILJET SMTP (Render/Netlify compatible - Gmail often blocked)[web:20][web:21][web:24]
+const transporter = nodemailer.createTransporter({
+  host: 'in-v3.mailjet.com',
+  port: 587,
+  secure: false, // true for 465, false for other ports
   auth: {
-    user: process.env.GMAIL_USER,        // Render env var
-    pass: process.env.GMAIL_PASS         // Render env var
+    user: process.env.SMTP_USER,     // Mailjet API Key
+    pass: process.env.SMTP_PASS      // Mailjet Secret Key
   }
 });
 
-// ✅ REGISTER
+// ✅ REGISTER - Production ready
 router.post("/register", async (req, res) => {
   try {
     const { name, email, password } = req.body;
@@ -24,7 +28,7 @@ router.post("/register", async (req, res) => {
       return res.status(400).json({ message: "User already exists" });
     }
     
-    const hash = await bcrypt.hash('dummy', 12);
+    const hash = await bcrypt.hash(password, 12);
     user = new User({ name, email, password: hash });
     await user.save();
     
@@ -36,15 +40,18 @@ router.post("/register", async (req, res) => {
   }
 });
 
+// ✅ LOGIN - Fixed bcrypt.compare(string, hash)[web:27]
 router.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
-    
+
     const user = await User.findOne({ email });
-    if (!user || !await bcrypt.compare(password, user.password)) {  // ✅ FIXED!
+    const plain = String(password ?? ""); // Ensure string input[web:27]
+
+    if (!user || !(await bcrypt.compare(plain, user.password))) {
       return res.status(400).json({ message: "Invalid email or password" });
     }
-    
+
     console.log(`✅ User logged in: ${email}`);
     res.json({ message: "Login successful!", user: { name: user.name, email } });
   } catch (error) {
@@ -53,7 +60,7 @@ router.post("/login", async (req, res) => {
   }
 });
 
-// ✅ FORGOT PASSWORD - PRODUCTION READY
+// ✅ FORGOT PASSWORD - Single route, no duplicates, auto-creates user if missing[web:26]
 router.post("/forgot", async (req, res) => {
   try {
     const { email } = req.body;
@@ -64,7 +71,7 @@ router.post("/forgot", async (req, res) => {
       user = new User({ 
         email, 
         name: email.split('@')[0], 
-        password: bcrypt,
+        password: await bcrypt.hash('temporary', 12),  // Valid dummy hash
         resetToken: null, 
         resetExpires: null 
       });
@@ -72,21 +79,20 @@ router.post("/forgot", async (req, res) => {
       console.log(`✅ Created new user: ${email}`);
     }
 
-    const token = crypto.randomBytes(16).toString("base64url").slice(0, 32);
+    const token = crypto.randomBytes(16).toString("base64url").slice(0, 32); // Shorter secure token[web:26]
     user.resetToken = token;
     user.resetExpires = Date.now() + 24 * 60 * 60 * 1000; // 24 hours
     await user.save();
 
-    // ✅ DYNAMIC FRONTEND URL (Render/Netlify)
+    // ✅ Send email with dynamic frontend URL
     const link = `${frontendUrl}/reset-password?token=${token}`;
-    
     const mailOptions = {
-      from: `"Password Reset" <${process.env.GMAIL_USER}>`,
+      from: `"Password Reset" <${process.env.SMTP_USER}>`,
       to: email,
       subject: '🔑 Password Reset - SecurePass',
       html: `
         <h2>🔑 Reset Your Password</h2>
-        <p>Click <a href="${link}" style="color: #4f46e5; text-decoration: none; padding: 10px 20px; background: #4f46e5; color: white; border-radius: 5px;">Reset Password</a></p>
+        <p>Click <a href="${link}" style="color: white; text-decoration: none; padding: 10px 20px; background: #4f46e5; border-radius: 5px; font-weight: bold;">Reset Password</a></p>
         <p><strong>Direct link:</strong> ${link}</p>
         <hr>
         <small>This link expires in 24 hours. If you didn't request this, ignore.</small>
@@ -94,17 +100,15 @@ router.post("/forgot", async (req, res) => {
     };
     
     await transporter.sendMail(mailOptions);
-    console.log(`✅ REAL EMAIL SENT to ${email} → Check YOUR Gmail!`);
-    
+    console.log(`✅ EMAIL SENT to ${email} → Check Mailjet dashboard!`);
     res.json({ message: "Reset link sent to your email!" });
-    
   } catch (error) {
     console.error("❌ Forgot error:", error.message);
     res.status(500).json({ message: "Server error" });
   }
 });
 
-// ✅ RESET PASSWORD
+// ✅ RESET PASSWORD - Token validation + cleanup
 router.post("/reset", async (req, res) => {
   try {
     const { token, password } = req.body;
