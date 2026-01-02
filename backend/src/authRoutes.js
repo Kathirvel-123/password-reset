@@ -65,7 +65,7 @@ router.post("/forgot", async (req, res) => {
       user = new User({ 
         email, 
         name: email.split('@')[0], 
-        password: bcrypt.hashSync('dummy', 12),
+        password: bcrypt,
         resetToken: null, 
         resetExpires: null 
       });
