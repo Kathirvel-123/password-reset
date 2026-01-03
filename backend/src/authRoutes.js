@@ -9,14 +9,15 @@ const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
 
 // ✅ MAILJET SMTP (Render/Netlify compatible - Gmail often blocked)[web:20][web:21][web:24]
 const transporter = nodemailer.createTransport({
-  host: 'in-v3.mailjet.com',
+  host: "smtp.resend.com",
   port: 587,
-  secure: false, // true for 465, false for other ports
+  secure: false,
   auth: {
-    user: process.env.SMTP_USER,     // Mailjet API Key
-    pass: process.env.SMTP_PASS      // Mailjet Secret Key
+    user: "resend",
+    pass: process.env.RESEND_API_KEY  // Your new key
   }
 });
+
 
 // ✅ REGISTER - Production ready
 router.post("/register", async (req, res) => {
@@ -87,7 +88,7 @@ router.post("/forgot", async (req, res) => {
     // ✅ Send email with dynamic frontend URL
     const link = `${frontendUrl}/reset-password?token=${token}`;
     const mailOptions = {
-      from: `"Password Reset" <${process.env.SMTP_USER}>`,
+      from: "Password Reset <onboarding@resend.dev>",
       to: email,
       subject: '🔑 Password Reset - SecurePass',
       html: `
